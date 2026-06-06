@@ -54,13 +54,14 @@ download_repo()
         mkdir -p $out
     fi
 
-    pushd $out > /dev/null
+    pushd $out &> /dev/null
     file="skills-main.zip"
     file=$(curl -sSLOJ $repo -w "%{filename_effective}")
     echo "Verifying $file"
     unzip -qt $file
-    unzip $file
-    pushd > /dev/null
+    echo "Inflating $file"
+    unzip $file &> /dev/null
+    pushd &> /dev/null
 }
 
 # Filters the provided comma-separated skills in output directory
@@ -69,6 +70,9 @@ download_repo()
 # Args:
 #   $1: directory to filter the skills from
 #   $2: comma separated names of skills to filter
+#   $3: name of the directory where skills will be copied inside $REPO/skills
+#       - if left empty they will be copied at the root in $REPO/skills
+#       - otherwise they will be copied inside $REPO/skills/$3
 update_skill()
 {
     IFS="," read -ra skill_arr <<< "$2"
@@ -98,8 +102,36 @@ update_skill()
             continue
         fi
 
-        echo "Copying $result to $REPO/skills/$skill"
-        cp -r $result "$REPO/skills/"
+        if [[ -z $3 ]];
+        then
+            local out="$SKILLS"
+
+            echo "Copying $result to $out"
+            cp -r $result $out
+        else
+            local out="$SKILLS/$3"
+
+            # Delete old directory if exists
+            if [[ -e $out ]];
+            then
+                echo "Directory: $out exists"
+                if [[ ! -d $out ]];
+                then
+                    echo "Directory: $out is not a valid directory"
+                    rm -r $out
+                    # re-create the directory
+                    mkdir -p $out
+                fi
+            else
+                echo "Directory: $out Created"
+                # re-create the directory
+                mkdir -p $out
+            fi
+
+            echo "Copying $result to $out"
+            cp -r $result $out
+        fi
+
     done
 }
 
@@ -125,7 +157,7 @@ process_source ()
     echo "Processing $repo"
 
     download_repo $output $repo
-    update_skill $output "${source_part[1]}"
+    update_skill $output "${source_part[1]}" $owner
 }
 
 check_command_throw curl
