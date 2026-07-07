@@ -12,6 +12,7 @@ SKILLS="$REPO/skills"
 SOURCES=(
     "mattpocock|handoff,write-a-skill|https://github.com/mattpocock/skills/archive/refs/heads/main.zip"
     "JuliusBrussee|caveman,caveman-commit|https://github.com/JuliusBrussee/caveman/archive/refs/heads/main.zip"
+    "multica-ai|karpathy-guidelines|https://github.com/multica-ai/andrej-karpathy-skills/archive/refs/heads/main.zip"
 )
 
 # Exists early if command does not exist
