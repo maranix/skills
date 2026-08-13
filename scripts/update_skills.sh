@@ -14,16 +14,17 @@ SOURCES=(
     "JuliusBrussee|caveman,caveman-commit|https://github.com/JuliusBrussee/caveman/archive/refs/heads/main.zip"
     "multica-ai|karpathy-guidelines|https://github.com/multica-ai/andrej-karpathy-skills/archive/refs/heads/main.zip"
     "coreyhaines31|copywriting|https://github.com/coreyhaines31/marketingskills/archive/refs/heads/main.zip"
+    "dart-lang|*|https://github.com/dart-lang/skills/archive/refs/heads/main.zip"
+    "flutter|*|https://github.com/flutter/agent-plugins/archive/refs/heads/main.zip"
 )
 
 # Exists early if command does not exist
 check_command_throw()
 {
-if [[ -n "$(command -v $1 &>/dev/null)" ]];
-then
-    echo "unable to find $1, exiting..."
-    exit 1
-fi
+    if ! command -v "$1" &>/dev/null; then
+        echo "unable to find $1, exiting..."
+        exit 1
+    fi
 }
 
 # Downloads the repo in output directory using curl
@@ -81,6 +82,31 @@ update_skill()
 
     for skill in "${skill_arr[@]}";
     do
+        if [[ "$skill" == "*" ]]; then
+            local skill_dirs=()
+            while IFS= read -r skill_file; do
+                [[ -n "$skill_file" ]] && skill_dirs+=("$(dirname "$skill_file")")
+            done < <(find "$1" -name "SKILL.md" -not -path "*/plugins*")
+
+            if (( ${#skill_dirs[@]} == 0 )); then
+                echo "Unable to find any skills in $1, skipping"
+                continue
+            fi
+
+            for result in "${skill_dirs[@]}"; do
+                if [[ -z ${3:-} ]]; then
+                    local out="$SKILLS"
+                else
+                    local out="$SKILLS/$3"
+                    mkdir -p "$out"
+                fi
+
+                echo "Copying $result to $out"
+                cp -r "$result" "$out"
+            done
+            continue
+        fi
+
         result=$(find "$1" -name "$skill" -type d -not -path "*/plugins*")
         count=$(wc -l <<< "$result")
 
